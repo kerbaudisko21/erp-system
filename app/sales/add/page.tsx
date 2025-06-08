@@ -1,10 +1,10 @@
 "use client";
 
-import {useState, useEffect} from "react";
-import {Button} from "@/components/ui/button";
-import {Input} from "@/components/ui/input";
-import {useRouter} from "next/navigation";
-import {Trash2} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 
 interface Product {
     id: number;
@@ -18,47 +18,48 @@ interface Customer {
     name: string;
 }
 
+interface SaleItem {
+    productId: number;
+    quantity: number;
+}
+
 const dummyProducts: Product[] = [
-    {id: 1, name: "Oli Yamalube", modalPrice: 30000, sellPrice: 40000},
-    {id: 2, name: "Ban IRC", modalPrice: 200000, sellPrice: 250000},
+    { id: 1, name: "Oli Yamalube", modalPrice: 30000, sellPrice: 40000 },
+    { id: 2, name: "Ban IRC", modalPrice: 200000, sellPrice: 250000 },
 ];
 
 const dummyCustomers: Customer[] = [
-    {id: 1, name: "Budi Santoso"},
-    {id: 2, name: "Siti Aminah"},
+    { id: 1, name: "Budi Santoso" },
+    { id: 2, name: "Siti Aminah" },
 ];
 
 export default function AddSalesPage() {
     const router = useRouter();
     const [customerId, setCustomerId] = useState<number | null>(null);
-    const [items, setItems] = useState<{ productId: number; quantity: number }[]>(
-        []
-    );
+    const [items, setItems] = useState<SaleItem[]>([]);
     const [notaNumber, setNotaNumber] = useState("");
 
     useEffect(() => {
         const generateNota = () => {
             const now = new Date();
             const pad = (n: number) => n.toString().padStart(2, "0");
-
             const yy = now.getFullYear().toString().slice(-2);
             const mm = pad(now.getMonth() + 1);
             const dd = pad(now.getDate());
             const hh = pad(now.getHours());
             const min = pad(now.getMinutes());
-
             return `SALE-${yy}${mm}${dd}-${hh}${min}`;
         };
         setNotaNumber(generateNota());
     }, []);
 
     const addItem = () => {
-        setItems([...items, {productId: dummyProducts[0].id, quantity: 1}]);
+        setItems([...items, { productId: dummyProducts[0].id, quantity: 1 }]);
     };
 
-    const updateItem = (index: number, field: string, value: any) => {
+    const updateItem = (index: number, field: keyof SaleItem, value: number) => {
         const updated = [...items];
-        (updated[index] as any)[field] = field === "quantity" ? +value : value;
+        updated[index] = { ...updated[index], [field]: value };
         setItems(updated);
     };
 
@@ -78,10 +79,10 @@ export default function AddSalesPage() {
                 jual += product.sellPrice * item.quantity;
             }
         });
-        return {modal, jual, margin: jual - modal};
+        return { modal, jual, margin: jual - modal };
     };
 
-    const {modal, jual, margin} = calculateTotal();
+    const { modal, jual, margin } = calculateTotal();
 
     const handleSubmit = () => {
         if (!customerId || items.length === 0) {
@@ -106,7 +107,7 @@ export default function AddSalesPage() {
             {/* No Nota */}
             <div className="mb-6">
                 <label className="block mb-1 font-medium text-sm">No Nota</label>
-                <Input type="text" value={notaNumber} disabled/>
+                <Input type="text" value={notaNumber} disabled />
             </div>
 
             {/* Select Customer */}
@@ -172,23 +173,23 @@ export default function AddSalesPage() {
                                             min={1}
                                             value={item.quantity}
                                             onChange={(e) =>
-                                                updateItem(index, "quantity", e.target.value)
+                                                updateItem(
+                                                    index,
+                                                    "quantity",
+                                                    Math.max(1, +e.target.value)
+                                                )
                                             }
                                         />
                                     </td>
                                     <td className="px-4 py-3">
-                                        Rp{" "}
-                                        {product &&
-                                            (product.modalPrice * item.quantity).toLocaleString()}
+                                        Rp {((product?.modalPrice ?? 0) * item.quantity).toLocaleString()}
                                     </td>
                                     <td className="px-4 py-3">
-                                        Rp{" "}
-                                        {product &&
-                                            (product.sellPrice * item.quantity).toLocaleString()}
+                                        Rp {((product?.sellPrice ?? 0) * item.quantity).toLocaleString()}
                                     </td>
                                     <td className="px-4 py-3 text-center">
                                         <button onClick={() => removeItem(index)}>
-                                            <Trash2 size={16} className="text-red-500"/>
+                                            <Trash2 size={16} className="text-red-500" />
                                         </button>
                                     </td>
                                 </tr>
@@ -196,10 +197,7 @@ export default function AddSalesPage() {
                         })}
                         {items.length === 0 && (
                             <tr>
-                                <td
-                                    colSpan={5}
-                                    className="px-4 py-3 text-center text-gray-500"
-                                >
+                                <td colSpan={5} className="px-4 py-3 text-center text-gray-500">
                                     Tidak ada barang ditambahkan.
                                 </td>
                             </tr>

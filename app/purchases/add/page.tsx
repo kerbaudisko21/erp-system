@@ -6,12 +6,28 @@ import {Button} from "@/components/ui/button";
 import {Input} from "@/components/ui/input";
 import {Trash2} from "lucide-react";
 
-const dummySuppliers = [
+type PurchaseItem = {
+    productId: number;
+    quantity: number;
+};
+
+type Supplier = {
+    id: number;
+    name: string;
+};
+
+type Product = {
+    id: number;
+    name: string;
+    price: number;
+};
+
+const dummySuppliers: Supplier[] = [
     {id: 1, name: "CV. Sumber Makmur"},
     {id: 2, name: "PT. Sparepart Jaya"},
 ];
 
-const dummyProducts = [
+const dummyProducts: Product[] = [
     {id: 1, name: "Oli Yamalube", price: 30000},
     {id: 2, name: "Ban IRC", price: 150000},
     {id: 3, name: "Aki GS", price: 250000},
@@ -53,7 +69,7 @@ export default function AddPurchasePage() {
     // Data form
     const [supplierId, setSupplierId] = useState<number | null>(null);
     const [orderDate, setOrderDate] = useState("");
-    const [items, setItems] = useState<{ productId: number; quantity: number }[]>([]);
+    const [items, setItems] = useState<PurchaseItem[]>([]);
 
     // Generate no nota saat page load
     useEffect(() => {
@@ -65,9 +81,13 @@ export default function AddPurchasePage() {
         setItems([...items, {productId: dummyProducts[0].id, quantity: 1}]);
     };
 
-    const updateItem = (index: number, key: string, value: any) => {
+    const updateItem = (
+        index: number,
+        key: keyof PurchaseItem,
+        value: string | number
+    ) => {
         const updated = [...items];
-        updated[index][key as "productId" | "quantity"] = key === "quantity" ? +value : +value;
+        updated[index][key] = typeof value === "string" ? +value : value;
         setItems(updated);
     };
 

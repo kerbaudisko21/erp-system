@@ -1,6 +1,7 @@
 "use client";
 
-import React, {useState, useMemo, useEffect} from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { SideSheet } from "@/components/sidesheet";
 
@@ -35,6 +36,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
 }
 
 export default function SalesPage() {
+    const router = useRouter();
     const [salesOrders, setSalesOrders] = useState<SaleOrder[]>([
         {
             id: 1,
@@ -60,37 +62,49 @@ export default function SalesPage() {
     ]);
 
     const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-    // SideSheet open state & selected sale detail
     const [selectedSale, setSelectedSale] = useState<SaleOrder | null>(null);
 
-    // Filter state
     const [filterCustomer, setFilterCustomer] = useState("");
     const [filterNoteNumber, setFilterNoteNumber] = useState("");
 
     const filteredSalesOrders = useMemo(() => {
         return salesOrders.filter((sale) => {
-            if (filterCustomer && !sale.customer.toLowerCase().includes(filterCustomer.toLowerCase()))
-                return false;
-            if (filterNoteNumber && !sale.noteNumber.toLowerCase().includes(filterNoteNumber.toLowerCase()))
-                return false;
+            if (filterCustomer && !sale.customer.toLowerCase().includes(filterCustomer.toLowerCase())) return false;
+            if (filterNoteNumber && !sale.noteNumber.toLowerCase().includes(filterNoteNumber.toLowerCase())) return false;
             return true;
         });
     }, [salesOrders, filterCustomer, filterNoteNumber]);
 
-    // Update status dari SideSheet dropdown
     function handleStatusChange(id: number, newStatus: SaleOrder["status"]) {
         setSalesOrders((old) =>
             old.map((sale) => (sale.id === id ? { ...sale, status: newStatus } : sale))
         );
         setToastMessage(`Status sales order #${id} diubah menjadi "${newStatus}"`);
-        // juga update selectedSale supaya dropdown tetap sinkron
         setSelectedSale((old) => (old && old.id === id ? { ...old, status: newStatus } : old));
+    }
+
+    function handleAddSale() {
+        const newSale: SaleOrder = {
+            id: Date.now(),
+            noteNumber: `SO-${Date.now()}`,
+            customer: "Customer Baru",
+            orderDate: new Date().toISOString().split("T")[0],
+            status: "draft",
+            items: [],
+            totalAmount: 0,
+        };
+        setSalesOrders((prev) => [...prev, newSale]);
+        setSelectedSale(newSale);
+        setToastMessage("Sales Order baru berhasil dibuat.");
     }
 
     return (
         <div className="w-full min-h-screen p-6">
-            <h1 className="text-3xl font-bold mb-6">Sales Orders</h1>
+
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Sales Orders</h1>
+                <Button onClick={() => router.push("/sales/add")}>+ Tambah Penjualan</Button>
+            </div>
 
             {/* Filter */}
             <div className="mb-6 flex gap-4 max-w-lg">
@@ -132,13 +146,14 @@ export default function SalesPage() {
                         </tr>
                     ) : (
                         filteredSalesOrders.map((sale) => (
-                            <tr
-                                key={sale.id}
-                                className="border-t hover:bg-gray-50 transition cursor-pointer"
-                                onClick={() => setSelectedSale(sale)}
-                            >
+                            <tr key={sale.id} className="border-t hover:bg-gray-50 transition">
                                 <td className="px-5 py-3">{sale.id}</td>
-                                <td className="px-5 py-3 text-blue-600 underline">{sale.noteNumber}</td>
+                                <td
+                                    className="px-5 py-3 text-blue-600 underline cursor-pointer"
+                                    onClick={() => setSelectedSale(sale)}
+                                >
+                                    {sale.noteNumber}
+                                </td>
                                 <td className="px-5 py-3">{sale.customer}</td>
                                 <td className="px-5 py-3">{sale.orderDate}</td>
                                 <td className="px-5 py-3">Rp {sale.totalAmount.toLocaleString("id-ID")}</td>
@@ -150,39 +165,28 @@ export default function SalesPage() {
                 </table>
             </div>
 
-            <SideSheet
-                open={!!selectedSale}
-                onClose={() => setSelectedSale(null)}
-            >
+            {/* SideSheet Detail */}
+            <SideSheet open={!!selectedSale} onClose={() => setSelectedSale(null)}>
                 {selectedSale && (
                     <div className="space-y-4 p-4">
-                        {/* No Nota */}
-                        <div className="space-y-1">
-                            <p className="text-gray-500 uppercase text-xs font-medium tracking-wide">No. Nota</p>
-                            <p className="text-gray-800 font-semibold">{selectedSale.noteNumber}</p>
+                        <div>
+                            <p className="text-gray-500 text-xs uppercase">No. Nota</p>
+                            <p className="font-semibold">{selectedSale.noteNumber}</p>
                         </div>
-
-                        {/* Customer */}
-                        <div className="space-y-1">
-                            <p className="text-gray-500 uppercase text-xs font-medium tracking-wide">Customer</p>
+                        <div>
+                            <p className="text-gray-500 text-xs uppercase">Customer</p>
                             <p>{selectedSale.customer}</p>
                         </div>
-
-                        {/* Tanggal Order */}
-                        <div className="space-y-1">
-                            <p className="text-gray-500 uppercase text-xs font-medium tracking-wide">Tanggal Order</p>
+                        <div>
+                            <p className="text-gray-500 text-xs uppercase">Tanggal Order</p>
                             <p>{selectedSale.orderDate}</p>
                         </div>
-
-                        {/* Status */}
-                        <div className="space-y-1">
-                            <p className="text-gray-500 uppercase text-xs font-medium tracking-wide">Status</p>
+                        <div>
+                            <p className="text-gray-500 text-xs uppercase">Status</p>
                             <select
                                 value={selectedSale.status}
-                                onChange={(e) =>
-                                    handleStatusChange(selectedSale.id, e.target.value as SaleOrder["status"])
-                                }
-                                className="inline-block px-2 py-1 rounded bg-blue-100 text-blue-700 font-semibold text-xs capitalize"
+                                onChange={(e) => handleStatusChange(selectedSale.id, e.target.value as SaleOrder["status"])}
+                                className="bg-blue-100 text-blue-700 text-sm px-2 py-1 rounded capitalize"
                             >
                                 <option value="draft">Draft</option>
                                 <option value="ordered">Ordered</option>
@@ -191,9 +195,8 @@ export default function SalesPage() {
                             </select>
                         </div>
 
-                        <hr className="my-4 border-gray-300" />
+                        <hr className="border-gray-300" />
 
-                        {/* Daftar Barang */}
                         <div>
                             <h3 className="text-sm font-semibold mb-2">Item Penjualan</h3>
                             <table className="w-full text-sm">
@@ -222,7 +225,6 @@ export default function SalesPage() {
                             </table>
                         </div>
 
-                        {/* Total */}
                         <div className="mt-4 text-right font-semibold text-lg">
                             Total: Rp {selectedSale.totalAmount.toLocaleString("id-ID")}
                         </div>
@@ -236,11 +238,8 @@ export default function SalesPage() {
                 )}
             </SideSheet>
 
-
-            {/* Toast */}
             {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
 
-            {/* Animasi */}
             <style jsx>{`
                 @keyframes fadeIn {
                     from {
