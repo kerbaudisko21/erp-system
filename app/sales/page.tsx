@@ -83,20 +83,20 @@ export default function SalesPage() {
         setSelectedSale((old) => (old && old.id === id ? { ...old, status: newStatus } : old));
     }
 
-    function handleAddSale() {
-        const newSale: SaleOrder = {
-            id: Date.now(),
-            noteNumber: `SO-${Date.now()}`,
-            customer: "Customer Baru",
-            orderDate: new Date().toISOString().split("T")[0],
-            status: "draft",
-            items: [],
-            totalAmount: 0,
-        };
-        setSalesOrders((prev) => [...prev, newSale]);
-        setSelectedSale(newSale);
-        setToastMessage("Sales Order baru berhasil dibuat.");
-    }
+    // function handleAddSale() {
+    //     const newSale: SaleOrder = {
+    //         id: Date.now(),
+    //         noteNumber: `SO-${Date.now()}`,
+    //         customer: "Customer Baru",
+    //         orderDate: new Date().toISOString().split("T")[0],
+    //         status: "draft",
+    //         items: [],
+    //         totalAmount: 0,
+    //     };
+    //     setSalesOrders((prev) => [...prev, newSale]);
+    //     setSelectedSale(newSale);
+    //     setToastMessage("Sales Order baru berhasil dibuat.");
+    // }
 
     return (
         <div className="w-full min-h-screen p-6">
